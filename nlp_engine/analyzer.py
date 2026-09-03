@@ -16,9 +16,10 @@ non‑technical user can understand.
 from __future__ import annotations
 import spacy
 
-import importlib
+
 from dataclasses import dataclass
 from typing import List, Dict
+
 
 # ---------------------------------------------------------------------------
 # Data model
@@ -36,6 +37,7 @@ class TokenInfo:
 # ---------------------------------------------------------------------------
 # Translation tables – plain English for a beginner
 # ---------------------------------------------------------------------------
+
 
 POS_MAP: Dict[str, str] = {
     "ADJ": "adjetivo",
@@ -96,9 +98,11 @@ DEP_MAP: Dict[str, str] = {
     # fallback: keep original label
 }
 
+
 def translate_pos(upos: str) -> str:
     """Return a friendly Spanish description for a universal POS tag."""
     return POS_MAP.get(upos, upos)
+
 
 def translate_dep(dep: str) -> str:
     """Return a friendly Spanish description for a dependency label."""
@@ -107,6 +111,7 @@ def translate_dep(dep: str) -> str:
 # ---------------------------------------------------------------------------
 # spaCy analyser implementation
 # ---------------------------------------------------------------------------
+
 
 class SpaCyAnalyzer:
     """Load a spaCy model for a given language and analyse text.
@@ -128,16 +133,20 @@ class SpaCyAnalyzer:
             # add more if needed
         }
         if lang not in model_map:
-            raise ValueError(f"Idioma no soportado: {lang}. Usa uno de {list(model_map)}")
+            raise ValueError(
+                f"Idioma no soportado: {lang}. Usa uno de {list(model_map)}"
+            )
         self.lang = lang
         self.model_name = model_map[lang]
-        # Import the model lazily – spaCy will raise a helpful error if the model is missing.
+        # Import the model lazily – spaCy will raise a helpful error if
+        # the model is missing.
         try:
             self.nlp = spacy.load(self.model_name)
         except Exception as e:
             raise RuntimeError(
                 f"No se pudo cargar el modelo '{self.model_name}'. "
-                f"Ejecuta 'python -m spacy download {self.model_name}' para instalarlo."
+                f"Ejecuta 'python -m spacy download {self.model_name}' "
+                f"para instalarlo."
             ) from e
 
     @classmethod
@@ -151,7 +160,8 @@ class SpaCyAnalyzer:
         tokens: List[TokenInfo] = []
         for token in doc:
             # spaCy's ``token.pos_`` returns the universal POS tag.
-            # ``token.morph`` returns a MorphAnalysis object; we turn it into a string.
+            # ``token.morph`` returns a MorphAnalysis object;
+            # we turn it into a string.
             tokens.append(
                 TokenInfo(
                     text=token.text,
@@ -163,6 +173,7 @@ class SpaCyAnalyzer:
                 )
             )
         return tokens
+
 
 # ---------------------------------------------------------------------------
 # Public helper functions
@@ -182,15 +193,19 @@ def analyze_text(text: str, lang: str = "es") -> List[TokenInfo]:
     analyzer = SpaCyAnalyzer.get(lang)
     return analyzer.analyze(text)
 
+
 def tokens_to_rich_simple(tokens: List[TokenInfo]) -> str:
     """Render a minimal view: token, translated POS and dependency.
 
-    Example line: "Listar VERB [verbo] ROOT [raíz]".  The tree structure is kept
+    Example line: "Listar VERB [verbo] ROOT [raíz]". 
+    The tree structure is kept but only the essential fields are shown.
     but only the essential fields are shown.
     """
     lines: List[str] = []
     # Build children map for tree drawing (same as in `tokens_to_rich`).
-    children: Dict[int, List[int]] = {i: [] for i in range(len(tokens))}
+    children: Dict[int, List[int]] = {
+        i: [] for i in range(len(tokens))
+    }
     root_idx = -1
     for i, tok in enumerate(tokens):
         head_idx = tok.head - 1
@@ -198,12 +213,16 @@ def tokens_to_rich_simple(tokens: List[TokenInfo]) -> str:
             children[head_idx].append(i)
         else:
             root_idx = i
+
     def draw(idx: int, prefix: str = ""):
         t = tokens[idx]
         # Omit whitespace tokens (POS == "SPACE")
         if t.pos == "SPACE":
             return
-        line = f"{prefix}{t.text} {t.pos} [{translate_pos(t.pos)}] {t.dep} [{translate_dep(t.dep)}]"
+        line = (
+            f"{prefix}{t.text} {t.pos} [{translate_pos(t.pos)}] {t.dep} "
+            f"[{translate_dep(t.dep)}]"
+        )
         lines.append(line)
         for n, child in enumerate(children[idx]):
             branch = "└── " if n == len(children[idx]) - 1 else "├── "
@@ -212,14 +231,19 @@ def tokens_to_rich_simple(tokens: List[TokenInfo]) -> str:
         draw(root_idx)
     else:
         for i, t in enumerate(tokens):
-            lines.append(f"{i+1}. {t.text} {t.pos} [{t.pos}] {t.dep} [{t.dep}]")
+            lines.append(
+                f"{i+1}. {t.text} {t.pos} [{t.pos}] {t.dep} [{t.dep}]"
+            )
     return "\n".join(lines)
+
 
 def tokens_to_rich(tokens: List[TokenInfo]) -> str:
     """Legacy wrapper that returns the simplified representation with brackets.
     Kept for backward compatibility.
     """
     return tokens_to_rich_simple(tokens)
+
+
 __all__ = [
     "TokenInfo",
     "analyze_text",

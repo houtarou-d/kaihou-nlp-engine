@@ -20,6 +20,8 @@ import click
 from rich.console import Console
 from rich.theme import Theme
 
+
+
 from .analyzer import analyze_text, tokens_to_rich_simple
 
 # ---------------------------------------------------------------------------
@@ -36,6 +38,8 @@ console = Console(theme=theme, style="on #1e1e1e")
 def _supported_langs() -> List[str]:
     # spaCy model names used in ``analyzer.SpaCyAnalyzer``.
     return ["es", "en", "fr", "de"]
+
+
 
 # ---------------------------------------------------------------------------
 # Click group
@@ -66,7 +70,10 @@ def cli() -> None:
                     try:
                         tokens = analyze_text(sentence, current_lang)
                     except Exception as e:
-                        console.print(f"[error]Error al cargar el modelo para '{current_lang}': {e}", style="error")
+                        console.print(
+                            f"[error]Error al cargar el modelo para '{current_lang}': {e}",
+                            style="error",
+            )
                         continue
                     # Simplified output (token, POS, Dep)
                     output = tokens_to_rich_simple(tokens)
@@ -145,7 +152,10 @@ def analyze(text: tuple, es_flag: bool, en_flag: bool, fr_flag: bool, de_flag: b
     try:
         tokens = analyze_text(sentence, chosen_lang)
     except Exception as e:
-        console.print(f"[error]Error al cargar el modelo para '{chosen_lang}': {e}", style="error")
+        console.print(
+            f"[error]Error al cargar el modelo para '{chosen_lang}': {e}",
+            style="error",
+        )
         sys.exit(1)
 
     # Render using the helper from ``analyzer``.
